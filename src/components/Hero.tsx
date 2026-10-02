@@ -9,6 +9,14 @@ interface HeroProps {
   onExploreProjects?: () => void;
 }
 
+const SLOGANS = [
+  "Espaços que atravessam o tempo.",
+  "Arquitetura pensada para viver melhor.",
+  "Arquitetura que nasce do lugar.",
+  "A matéria que respira com a luz.",
+  "A harmonia silenciosa do essencial.",
+];
+
 export default function Hero({ onExploreProjects }: HeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
@@ -17,6 +25,47 @@ export default function Hero({ onExploreProjects }: HeroProps) {
   const ctaRef = useRef<HTMLDivElement>(null);
   const tagsRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Typewriting state
+  const [phraseIndex, setPhraseIndex] = React.useState(0);
+  const [displayText, setDisplayText] = React.useState(SLOGANS[0]);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    if (prefersReducedMotion || isPaused) return;
+
+    const currentFullText = SLOGANS[phraseIndex];
+    let timeoutId: NodeJS.Timeout;
+
+    if (!isDeleting) {
+      if (displayText.length < currentFullText.length) {
+        timeoutId = setTimeout(() => {
+          setDisplayText(currentFullText.slice(0, displayText.length + 1));
+        }, 70);
+      } else {
+        timeoutId = setTimeout(() => {
+          setIsDeleting(true);
+        }, 2800);
+      }
+    } else {
+      if (displayText.length > 0) {
+        timeoutId = setTimeout(() => {
+          setDisplayText(currentFullText.slice(0, displayText.length - 1));
+        }, 32);
+      } else {
+        timeoutId = setTimeout(() => {
+          setIsDeleting(false);
+          setPhraseIndex((prev) => (prev + 1) % SLOGANS.length);
+        }, 450);
+      }
+    }
+
+    return () => clearTimeout(timeoutId);
+  }, [displayText, isDeleting, phraseIndex, isPaused]);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -98,15 +147,39 @@ export default function Hero({ onExploreProjects }: HeroProps) {
             <span>{STUDIO_BRAND.topTags[2]}</span>
           </div>
 
-          {/* Big Editorial Headline */}
-          <h1
-            ref={headlineRef}
-            className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal text-[#1C1B19] tracking-tight leading-[1.08]"
+          {/* Big Editorial Headline with Typewriting Animation */}
+          <div
+            className="min-h-[170px] sm:min-h-[220px] md:min-h-[250px] lg:min-h-[280px] flex flex-col justify-start select-none group"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
           >
-            Espaços<br />
-            que atravessam<br />
-            o tempo.
-          </h1>
+            <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-[0.2em] text-[#8C857B] font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1C1B19]/70 animate-pulse" />
+              <span>Manifesto 0{phraseIndex + 1} / 0{SLOGANS.length}</span>
+            </div>
+
+            <h1
+              ref={headlineRef}
+              className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal text-[#1C1B19] tracking-tight leading-[1.08] cursor-pointer"
+              onClick={() => {
+                setIsDeleting(true);
+                setDisplayText("");
+                setPhraseIndex((prev) => (prev + 1) % SLOGANS.length);
+                setIsDeleting(false);
+              }}
+              title="Clique para alternar o manifesto"
+            >
+              <span>{displayText}</span>
+              <span
+                className={`inline-block w-[3px] sm:w-[4px] h-[0.82em] bg-[#1C1B19] ml-1.5 align-baseline rounded-full ${
+                  !isDeleting && displayText.length === SLOGANS[phraseIndex].length
+                    ? "animate-pulse"
+                    : "opacity-100"
+                }`}
+                aria-hidden="true"
+              />
+            </h1>
+          </div>
 
           {/* Subheadline */}
           <p
